@@ -1,3 +1,4 @@
+![thesis_workflow-Page-2](https://user-images.githubusercontent.com/37457729/124478419-d5bdd280-ddad-11eb-83a3-628608885307.png)
 # Sports-tweets-analysis
 
 Analysis code for MSc thesis "Twitter as an indicator of sports activities in Helsinki Metropolitan Area".
