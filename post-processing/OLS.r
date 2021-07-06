@@ -22,11 +22,13 @@ corrplot(M, p.mat = res1$p, method = "color", type= "lower", addCoef.col = "whit
 #run OLS first with all variables and then drop variables according to OLS results and VIF score
 attach(df)
 OLS <- lm(tweets ~ sport_facilities + children + employed + kids_house + adult_house + own_house + rental + household_size)
+summary(OLS)
 vif(OLS)
 AICc(OLS)
 
 #final OLS
 OLS_final <- lm(tweets ~ sport_facilities + children + employed)
+summary(OLS_final)
 vif(OLS_final)
 AICc(OLS_final)
 
