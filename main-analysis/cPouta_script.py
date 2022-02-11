@@ -112,7 +112,7 @@ def get_sports_tweets(df, keyword_list):
     return sports_df
 
 
-def geocode(sportstogeocode, hmanames):
+def geocode(sportstogeocode, jyvnames):
     """
     Geocodes the tweets in sportstogeocode dataframe based on the gazetteer saved in hmanames dataframe.
     
@@ -122,10 +122,10 @@ def geocode(sportstogeocode, hmanames):
     hmanames | String: name of GeoPandas dataframe holding gazetteer information
     """
     #create a list of the placenames for comparison purposes
-    placenames = [i.lower() for i in list(hmanames["name"])]
+    placenames = [i.lower() for i in list(jyvnames["name"])]
     
     #create a new geodataframe which will hold the geocoded tweets
-    sportshma = gpd.GeoDataFrame()
+    sportsjyv = gpd.GeoDataFrame()
     
     for i, row in sportstogeocode.iterrows():
         
@@ -135,19 +135,19 @@ def geocode(sportstogeocode, hmanames):
     
             #if there are any placenames, retrieve the point for that place and add it to the tweet information
             if len(placelist) > 0:
-                x = hmanames.loc[hmanames["name"]== placelist[0], "geometry"].values[0].x
-                y = hmanames.loc[hmanames["name"]== placelist[0], "geometry"].values[0].y
-                geom = hmanames.loc[hmanames["name"]== placelist[0], "geometry"].values[0]
+                x = jyvnames.loc[jyvnames["name"]== placelist[0], "geometry"].values[0].x
+                y = jyvnames.loc[jyvnames["name"]== placelist[0], "geometry"].values[0].y
+                geom = jyvnames.loc[jyvnames["name"]== placelist[0], "geometry"].values[0]
                 row["geometry"] = geom
                 row["lon"] = x
                 row["lat"] = y
-                sportshma = sportshma.append(row)
+                sportsjyv = sportsjyv.append(row)
  
         except TypeError:
             print("Encountered a TypeError")
             
-    print(str(len(sportshma)) + " tweets succesfully geocoded")
-    return sportshma
+    print(str(len(sportsjyv)) + " tweets succesfully geocoded")
+    return sportsjyv
 
 def parse_points(sportsgeotagged):
     """
@@ -176,21 +176,29 @@ def parse_points(sportsgeotagged):
     gdf = gdf.to_crs(epsg=3067)
     
     #intersect with HMA polygon, save the tweets that are inside AOI
-    hma = gpd.read_file(r"data/PKS_postinumeroalueet_2020.shp")
-    hma = hma.to_crs(epsg=3067)
+    #hma = gpd.read_file(r"data/PKS_postinumeroalueet_2020.shp")
+    #hma = hma.to_crs(epsg=3067)
     
-    hmageotagged = gpd.overlay(gdf, hma, how="intersection")
-    hmageotagged.drop(["Posno", "Toimip", "Toimip_ru", "Nimi", "Nimi_Ru", "Kunta", "Kunta_nro"], axis=1, inplace=True)
+     # Fetch city border data from WFS using requests
+    r = requests.get('http://geo.stat.fi/geoserver/tilastointialueet/wfs', params=dict(service='WFS', version='2.0.0', request='GetFeature', typeName='tilastointialueet:kunta1000k', outputFormat='json'))
 
-    return hmageotagged
+    # get a shapefile of municipalities
+    municip = gpd.GeoDataFrame.from_features(geojson.loads(r.content),  crs="EPSG:3067") 
+    # only keep Jyväskylä area
+    jyv = municip.loc[municip["nimi"] == "Jyväskylä"]
+    jyv = jyv.to_crs(epsg=3067)
+    
+    jyvgeotagged = gpd.overlay(gdf, jyv, how="intersection")
+
+    return jyvgeotagged
 
 
 # Workflow
 
 #Download stanza nlp models (skips if they are already downloaded)
-stanza.download("en")
-stanza.download("fi")
-stanza.download("et")
+stanza.download(lang="en")
+stanza.download(lang="fi")
+stanza.download(lang="et")
 
 #create pipelines 
 nlp_en = create_pipeline("en", "ewt")
