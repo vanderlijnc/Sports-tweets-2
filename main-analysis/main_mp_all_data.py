@@ -11,8 +11,8 @@ from pyproj import CRS
 import geopandas as gpd
 import requests
 import geojson
-import multiprocessing as mp
-from multiprocessing import Pool
+#import multiprocessing as mp
+#from multiprocessing import Pool
 from shapely.geometry import Point
 # Define functions
 
