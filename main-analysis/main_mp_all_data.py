@@ -16,6 +16,7 @@ import geojson
 from shapely.geometry import Point
 # Define functions
 
+script_start = time.time()
 def create_pipeline(lang, package_name):
     """
     Creates a stanza pipeline for the language given as argument.
@@ -26,9 +27,9 @@ def create_pipeline(lang, package_name):
     want to create eg. 'fi' or 'en'.
     """
     #to avoid an error
-    #os.environ['KMP_DUPLICATE_LIB_OK']='TRUE'
+    os.environ['KMP_DUPLICATE_LIB_OK']='TRUE'
     #make the pipeline for tokenizing and lemmatization
-    nlp_pipeline = stanza.Pipeline(lang, processors='tokenize, lemma, pos', package=package_name)
+    nlp_pipeline = stanza.Pipeline(lang, processors='tokenize, lemma', package=package_name)
     nlp = spacy_stanza.StanzaLanguage(nlp_pipeline)
     print('Stanza pipeline created for language: ' + lang)
     return nlp
@@ -94,7 +95,7 @@ def create_lemmas_lambda(df, nlp_lang):
     df2['full_text'] = df2['full_text'].replace('#', '')
     df2['lemma_text_doc'] = df2.apply(lambda row: nlp_lang(row['full_text']), axis=1)
     df2['lemmas'] = df2.apply(lambda row: [token.lemma_ for token in row['lemma_text_doc']], axis=1)
-    #df2['lemma_text'] = df2.apply(lambda row: ' '.join(row['lemmas']), axis=1)
+    df2['lemma_text'] = df2.apply(lambda row: ' '.join(row['lemmas']), axis=1)
     df2 = df2.drop(columns=['lemma_text_doc'])
     #print the time it took to lemmatise x amount of tweets
     tweet_count = len(df2)
@@ -226,7 +227,7 @@ if __name__ == '__main__':
 
     # Read all tweets
     df = pd.read_pickle('all_data.pkl')
-
+    #df = df[0:1000]
     #separate English, Finnish and Estonian dataframes
     df_fi = df[df['lang']=='fi']
     df_en = df[df['lang']=='en']
@@ -319,7 +320,10 @@ if __name__ == '__main__':
 
     if len(final_df) > 0:
 
-        final_df.to_file('finaloutput_mp.gpkg', driver='GPKG')
+        final_df.to_file('finaloutput_lambda.gpkg', driver='GPKG')
         print('---Geopackage created---')
     else:
         print('--- Final dataframe is empty ---')
+
+    print('Time it took in minutes: ')
+    print((time.time()-script_start)/60)
