@@ -213,9 +213,9 @@ def parse_points(sportsgeotagged_o):
 if __name__ == '__main__':
 
 
-    stanza.download(lang='en', package='ewt')
-    stanza.download(lang='fi', package='tdt')
-    stanza.download(lang='et', package='edt')
+    stanza.download(lang='en')
+    stanza.download(lang='fi')
+    stanza.download(lang='et')
 
     #create pipelines
     nlp_en = create_pipeline('en', 'ewt')
