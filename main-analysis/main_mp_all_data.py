@@ -181,7 +181,7 @@ if __name__ == '__main__':
 
     # Read all tweets
     df = pd.read_pickle('all_data.pkl')
-    #df = df[0:10000]
+    df = df[0:10000]
 
     # Separate Finnish, English and Estonian to separate dataframes
     df_fi = df[df['lang']=='fi']
@@ -259,7 +259,7 @@ if __name__ == '__main__':
 
     if len(final_df) > 0:
 
-        final_df.to_file('finaloutput_lambda.gpkg', driver='GPKG')
+        final_df.to_file('finaloutput_lambda_10000.gpkg', driver='GPKG')
         print('---Geopackage created---')
     else:
         print('--- Final dataframe is empty ---')
