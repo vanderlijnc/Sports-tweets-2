@@ -1,4 +1,4 @@
-#import required packages
+# Import required packages
 import os
 import time
 import glob
@@ -7,97 +7,51 @@ import spacy
 import spacy_stanza
 import stanza
 import matplotlib.pyplot as plt
-from pyproj import CRS
 import geopandas as gpd
 import requests
 import geojson
-#import multiprocessing as mp
-#from multiprocessing import Pool
 from shapely.geometry import Point
-# Define functions
+from pyproj import CRS
 
+# Get starting time
 script_start = time.time()
+
+# Define functions
 def create_pipeline(lang, package_name):
-    """
-    Creates a stanza pipeline for the language given as argument.
+    """Creates a stanza pipeline for the language given as argument.
 
     Parameters:
 
     lang| String: abbreviation for language which pipeline you
     want to create eg. 'fi' or 'en'.
     """
-    #to avoid an error
+    # To avoid an error
     os.environ['KMP_DUPLICATE_LIB_OK']='TRUE'
-    #make the pipeline for tokenizing and lemmatization
+    # Make the pipeline for tokenizing and lemmatization
     nlp_pipeline = stanza.Pipeline(lang, processors='tokenize, lemma, pos', package=package_name)
     nlp = spacy_stanza.StanzaLanguage(nlp_pipeline)
     print('Stanza pipeline created for language: ' + lang)
     return nlp
 
-def create_lemmas(df, nlp_lang):
-    """
-    Lemmatises text in the dataframe column 'full_text'.
-    Takes the name of the dataframe and
-    nlp pipeline for the correct language. Supposes that
-    all tweets have the same language.
-    Returns the same dataframe with two additional fields:
-    lemmas (a list of lemmas) and
-    lemma_text (text containing only the lemmas)
-
-    Parameters:
-
-    df| String: Pandas dataframe to lemmatize
-    nlp_lang| String: Name of Stanza Pipeline for the language corresponding to the dataframe
-    """
-    df2 = df.copy()
-    start_time = time.time()
-
-    df2['lemmas'] = None
-    #df2['lemma_text'] = None
-
-    df2 = df2.replace('#','')
-
-    for i in df2.index:
-
-        tweet_text = df2.loc[i, 'full_text']
-
-        try:
-            #lemmatise the text
-            doc = nlp_lang(tweet_text)
-
-            lemmas = []
-            #lemma_text = ''
-
-            #access the lemmas and add to the dataframe
-            for token in doc:
-                lemmas.append(token.lemma_)
-                #lemma_text += ' ' + token.lemma_
-
-            df2.at[i, 'lemmas'] = lemmas
-            #df2.at[i, 'lemma_text'] = lemma_text
-
-
-        except IndexError:
-            print('Encountered Index Error')
-
-        #print the time it took to lemmatise x amount of tweets
-        tweet_count = len(df2)
-        total_time = round((time.time() - start_time)/60, 3)
-
-    print('--- Lemmatising %s tweets took %s minutes ---' % (tweet_count, total_time))
-    return df2
-
 def create_lemmas_lambda(df, nlp_lang):
-
+    """ Lemmatizes a pandas column based on a NLP pipeline.
+    """
+    # Create a df copy so pandas don't give a warning
     df2 = df.copy()
+    # Get start time
     start_time = time.time()
 
+    # Replace hashtags with empty string
     df2['full_text'] = df2['full_text'].replace('#', '')
+    # Create a doc for each row in the full_text column
     df2['lemma_text_doc'] = df2.apply(lambda row: nlp_lang(row['full_text']), axis=1)
+    # Create a list of lemmas into column
     df2['lemmas'] = df2.apply(lambda row: [token.lemma_ for token in row['lemma_text_doc']], axis=1)
+    # Stitch together list of lemmas into other column
     df2['lemma_text'] = df2.apply(lambda row: ' '.join(row['lemmas']), axis=1)
+    # Drop unnessecary column
     df2 = df2.drop(columns=['lemma_text_doc'])
-    #print the time it took to lemmatise x amount of tweets
+    # Print the time it took to lemmatise x amount of tweets
     tweet_count = len(df2)
     total_time = round((time.time() - start_time)/60, 3)
 
@@ -119,10 +73,10 @@ def get_sports_tweets(df, keyword_list):
     for i, row in df.iterrows():
 
         try:
-            #check if keywords are found in lemmas
+            # Check if keywords are found in lemmas
             count = [lemma for lemma in df['lemmas'][i] if(lemma in keyword_list)]
 
-            #append the matched rows to sports dataframe
+            # Append the matched rows to sports dataframe
             if len(count) > 0:
                 sports_df = sports_df.append(row)
 
@@ -141,19 +95,19 @@ def geocode(sportstogeocode, jyvnames):
     sportstogeocode | String: name of Pandas dataframe with ungeotagged tweets
     jyvnames | String: name of GeoPandas dataframe holding gazetteer information
     """
-    #create a list of the placenames for comparison purposes
+    # Create a list of the placenames for comparison purposes
     placenames = [i.lower() for i in list(jyvnames['name'])]
 
-    #create a new geodataframe which will hold the geocoded tweets
+    # Create a new geodataframe which will hold the geocoded tweets
     sportsjyv = gpd.GeoDataFrame()
 
     for i, row in sportstogeocode.iterrows():
 
         try:
-            #search if any lemmas match the list of placenames
+            # Search if any lemmas match the list of placenames
             placelist = [lemma.lower() for lemma in sportstogeocode.loc[i, 'lemmas'] if(lemma.lower() in placenames)]
 
-            #if there are any placenames, retrieve the point for that place and add it to the tweet information
+            # If there are any placenames, retrieve the point for that place and add it to the tweet information
             if len(placelist) > 0:
                 x = jyvnames.loc[jyvnames['name']== placelist[0], 'geometry'].values[0].x
                 y = jyvnames.loc[jyvnames['name']== placelist[0], 'geometry'].values[0].y
@@ -212,48 +166,34 @@ def parse_points(sportsgeotagged_o):
 
 if __name__ == '__main__':
 
-
+    # Download language models
     stanza.download(lang='en')
     stanza.download(lang='fi')
     stanza.download(lang='et')
 
-    #create pipelines
+    # Create pipelines
     nlp_en = create_pipeline('en', 'ewt')
     nlp_fi = create_pipeline('fi', 'tdt')
     nlp_et = create_pipeline('et', 'edt')
 
-    #create a geodataframe for final output
+    # Create a geodataframe for final output
     final_df = gpd.GeoDataFrame()
 
     # Read all tweets
     df = pd.read_pickle('all_data.pkl')
-    #df = df[0:1000]
-    #separate English, Finnish and Estonian dataframes
+    #df = df[0:10000]
+
+    # Separate Finnish, English and Estonian to separate dataframes
     df_fi = df[df['lang']=='fi']
     df_en = df[df['lang']=='en']
     df_et = df[df['lang']=='et']
 
-    """num_processes = mp.cpu_count()-1
-
-    p = mp.Pool(num_processes)
-    print('pool created')"""
-
-
-
+    # Lemmatize tweet text, using correct language pipeline
     results_fi = create_lemmas_lambda(df_fi, nlp_fi)
     results_en = create_lemmas_lambda(df_en, nlp_en)
     results_et = create_lemmas_lambda(df_et, nlp_et)
 
-    """df_list = [df_fi]
-    nlp_list = [nlp_fi]
-
-    with Pool() as p:
-        results = p.starmap_async(create_lemmas_lambda, zip(df_list, nlp_list)).get()"""
-
-    #results_fi = results[0]
-
-
-    #retrieve sports related tweets based on keyword lists
+    # Retrieve sports related tweets based on keyword lists
     sportslist_fi = ['kävely', 'kävellä', 'käveleminen' 'juoksu', 'juosta', 'juokseminen', 'hiihto', 'hiihtää', 'hiihtäminen',
                  'lenkki', 'lenkkeily', 'lenkkeillä', 'treenata', 'treenaaminen', 'urheilla', 'meloa', 'melonta', 'soutaa',
                  'soutaminen', 'patikointi', 'patikoida', 'patikoiminen',
@@ -290,24 +230,23 @@ if __name__ == '__main__':
 
     sports_et = get_sports_tweets(results_et, sportslist_et)
 
-
-    #combine dataframes of sports tweets
+    # Combine dataframes of sports tweets
     sports = sports_en.append(sports_fi)
     sports = sports.append(sports_et)
 
-    #here figure out which sports tweets already have geotags
+    # Figure out which sports tweets already have geotags
     sportstogeocode = sports[sports['geom'].isna()]
     sportsgeotagged = sports[~(sports['geom'].isna())]
 
-    #get info from gazetteer
+    # Read in gazetteer
     jyvnames = gpd.read_file(r'jyv_gazetteer.gpkg')
-    #geocode the tweets without geolocation
+    # Geocode the tweets without geolocation
     sportsjyv = geocode(sportstogeocode, jyvnames)
 
-    #parse points from geotagged tweets, this was done separately to speed up the process
+    # Parse points from geotagged tweets
     sportsgeotagged_jyv = parse_points(sportsgeotagged)
 
-    #combine back to the geocoded tweets and save to csv
+    # Combine back to the geocoded tweets
     if len(sportsjyv) > 0:
         sportsjyv_combined = sportsjyv.append(sportsgeotagged_jyv)
         final_df = final_df.append(sportsjyv_combined)
