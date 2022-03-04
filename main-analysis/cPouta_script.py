@@ -48,7 +48,7 @@ def create_lemmas(df, nlp_lang):
 
     df2["lemmas"] = None
     df2["lemma_text"] = None
-
+    df2['full_text'] = df2['full_text'].replace('#', '')
     for i in df2.index:
 
         tweet_text = df2.loc[i, "full_text"]
@@ -65,7 +65,7 @@ def create_lemmas(df, nlp_lang):
 
             #access the lemmas and add to the dataframe
             for token in doc:
-                token.lemma_ = token.lemma_.replace("#", "")
+                #token.lemma_ = token.lemma_.replace("#", "")
                 #token.lemma_ = token.lemma_.replace("oitta", "oittaa")
                 #token.lemma_ = token.lemma_.replace("palohe", "paloheinä")
                 lemmas.append(token.lemma_)
@@ -85,6 +85,30 @@ def create_lemmas(df, nlp_lang):
     print("--- Lemmatising %s tweets took %s minutes ---" % (tweet_count, total_time))
     return df2
 
+def create_lemmas_lambda(df, nlp_lang):
+    """ Lemmatizes a pandas column based on a NLP pipeline.
+    """
+    # Create a df copy so pandas don't give a warning
+    df2 = df.copy()
+    # Get start time
+    start_time = time.time()
+
+    # Replace hashtags with empty string
+    df2['full_text'] = df2['full_text'].replace('#', '')
+    # Create a doc for each row in the full_text column
+    df2['lemma_text_doc'] = df2.apply(lambda row: nlp_lang(row['full_text']), axis=1)
+    # Create a list of lemmas into column
+    df2['lemmas'] = df2.apply(lambda row: [token.lemma_ for token in row['lemma_text_doc']], axis=1)
+    # Stitch together list of lemmas into other column
+    df2['lemma_text'] = df2.apply(lambda row: ' '.join(row['lemmas']), axis=1)
+    # Drop unnessecary column
+    df2 = df2.drop(columns=['lemma_text_doc'])
+    # Print the time it took to lemmatise x amount of tweets
+    tweet_count = len(df2)
+    total_time = round((time.time() - start_time)/60, 3)
+
+    print('--- Lemmatising %s tweets took %s minutes ---' % (tweet_count, total_time))
+    return df2
 def get_sports_tweets(df, keyword_list):
     """
     Searches for matches to sports-related keywords from a dataframe that has been lemmatised.
@@ -212,11 +236,12 @@ final_df = gpd.GeoDataFrame()
 #process each chunk of tweets with the following workflow
 batchno = 1
 
-for name in glob.glob(r"chunk*"):
+for name in glob.glob(r"data/chunk*"):
 
     print("Processing batch " + str(batchno) + "/ 77")
     #add parameter nrows to test only a sample
-    df = pd.read_csv(name,encoding='utf-8',engine='c', nrows=10000)
+
+    df = pd.read_csv(name, engine='c', encoding='utf-8')
 
     #separate English, Finnish and Estonian dataframes
     df_fi = df[df["lang"]=="fi"]
@@ -224,9 +249,9 @@ for name in glob.glob(r"chunk*"):
     df_et = df[df["lang"]=="et"]
 
     #create lemmas for English, Finnish and Estonian tweets
-    df_fi = create_lemmas(df_fi, nlp_fi)
-    df_en = create_lemmas(df_en, nlp_en)
-    df_et = create_lemmas(df_et, nlp_et)
+    df_fi = create_lemmas_lambda(df_fi, nlp_fi)
+    df_en = create_lemmas_lambda(df_en, nlp_en)
+    df_et = create_lemmas_lambda(df_et, nlp_et)
 
 
     #retrieve sports related tweets based on keyword lists
@@ -296,6 +321,6 @@ final_df = final_df.drop(["lemmas"], axis=1)
 final_df = final_df.drop(["geom"], axis=1)
 if len(final_df) > 0:
 
-    final_df.to_file("finaloutput_10000.gpkg", driver='GPKG')
+    final_df.to_file("finaloutput_total.gpkg", driver='GPKG')
 else:
     print("--- Final dataframe is empty ---")
