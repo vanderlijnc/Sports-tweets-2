@@ -236,7 +236,7 @@ final_df = gpd.GeoDataFrame()
 #process each chunk of tweets with the following workflow
 batchno = 1
 
-for name in glob.glob( r"ubuntu@twitter-emil:~/data/chunk*"):
+for name in glob.glob( r"home/ubuntu/data/chunk*"):
 
     print("Processing batch " + str(batchno) + "/ 77")
     #add parameter nrows to test only a sample
@@ -310,7 +310,7 @@ for name in glob.glob( r"ubuntu@twitter-emil:~/data/chunk*"):
     sportsjyv_combined = sportsjyv.append(sportsgeotagged)
 
     #save the chunk to csv as a backup and to test post-processing in advance
-    sportsjyv_combined.to_csv("sports" + str(batchno) + ".csv")
+    sportsjyv_combined.to_csv("sports_new" + str(batchno) + ".csv")
     final_df = final_df.append(sportsjyv_combined)
 
     batchno += 1
