@@ -235,14 +235,13 @@ final_df = gpd.GeoDataFrame()
 
 #process each chunk of tweets with the following workflow
 batchno = 1
-print(glob.glob(r"/home/ubuntu/data/chunk*"))
 
-for name in glob.glob(r"/home/ubuntu/data/chunk*.csv"):
+for name in glob.glob(r"/home/ubuntu/data/chunk*"):
 
     print("Processing batch " + str(batchno) + "/ 77")
     #add parameter nrows to test only a sample
 
-    df = pd.read_csv(name, engine='c', encoding='utf-8')
+    df = pd.read_csv(name, engine='python', encoding='utf-8')
 
     #separate English, Finnish and Estonian dataframes
     df_fi = df[df["lang"]=="fi"]
