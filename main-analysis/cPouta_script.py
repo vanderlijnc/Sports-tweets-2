@@ -249,9 +249,9 @@ for name in glob.glob(r"/home/ubuntu/data/chunk*"):
     df_et = df[df["lang"]=="et"]
 
     #create lemmas for English, Finnish and Estonian tweets
-    df_fi = create_lemmas_lambda(df_fi, nlp_fi)
-    df_en = create_lemmas_lambda(df_en, nlp_en)
-    df_et = create_lemmas_lambda(df_et, nlp_et)
+    df_fi = create_lemmas(df_fi, nlp_fi)
+    df_en = create_lemmas(df_en, nlp_en)
+    df_et = create_lemmas(df_et, nlp_et)
 
 
     #retrieve sports related tweets based on keyword lists
