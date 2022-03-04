@@ -235,6 +235,7 @@ final_df = gpd.GeoDataFrame()
 
 #process each chunk of tweets with the following workflow
 batchno = 1
+print(glob.glob(r"/home/ubuntu/data/chunk*"))
 
 for name in glob.glob(r"/home/ubuntu/data/chunk*.csv"):
 
