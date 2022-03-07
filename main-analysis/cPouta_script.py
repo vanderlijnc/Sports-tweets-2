@@ -85,30 +85,7 @@ def create_lemmas(df, nlp_lang):
     print("--- Lemmatising %s tweets took %s minutes ---" % (tweet_count, total_time))
     return df2
 
-def create_lemmas_lambda(df, nlp_lang):
-    """ Lemmatizes a pandas column based on a NLP pipeline.
-    """
-    # Create a df copy so pandas don't give a warning
-    df2 = df.copy()
-    # Get start time
-    start_time = time.time()
 
-    # Replace hashtags with empty string
-    df2['full_text'] = df2['full_text'].replace('#', '')
-    # Create a doc for each row in the full_text column
-    df2['lemma_text_doc'] = df2.apply(lambda row: nlp_lang(row['full_text']), axis=1)
-    # Create a list of lemmas into column
-    df2['lemmas'] = df2.apply(lambda row: [token.lemma_ for token in row['lemma_text_doc']], axis=1)
-    # Stitch together list of lemmas into other column
-    df2['lemma_text'] = df2.apply(lambda row: ' '.join(row['lemmas']), axis=1)
-    # Drop unnessecary column
-    df2 = df2.drop(columns=['lemma_text_doc'])
-    # Print the time it took to lemmatise x amount of tweets
-    tweet_count = len(df2)
-    total_time = round((time.time() - start_time)/60, 3)
-
-    print('--- Lemmatising %s tweets took %s minutes ---' % (tweet_count, total_time))
-    return df2
 def get_sports_tweets(df, keyword_list):
     """
     Searches for matches to sports-related keywords from a dataframe that has been lemmatised.
@@ -249,9 +226,9 @@ for name in glob.glob(r"/home/ubuntu/data/chunk*"):
     df_et = df[df["lang"]=="et"]
 
     #create lemmas for English, Finnish and Estonian tweets
-    df_fi = create_lemmas(df_fi, nlp_fi)
-    df_en = create_lemmas(df_en, nlp_en)
-    df_et = create_lemmas(df_et, nlp_et)
+    df_fi_l = create_lemmas(df_fi, nlp_fi)
+    df_en_l = create_lemmas(df_en, nlp_en)
+    df_et_l = create_lemmas(df_et, nlp_et)
 
 
     #retrieve sports related tweets based on keyword lists
@@ -264,7 +241,7 @@ for name in glob.glob(r"/home/ubuntu/data/chunk*"):
                      "koris","futis", "koripallo", "uinti", "uida", "uiminen", "kajakki", "pujehtia", "purjehdus", "lätkä", "jooga",
                      "squash", "kössi", "pingis", "pöytätennis"]
 
-    sports_fi = get_sports_tweets(df_fi, sportslist_fi)
+    sports_fi = get_sports_tweets(df_fi_l, sportslist_fi)
 
     sportslist_en = ["running", "run", "walk", "walking", "jog" ,"jogging", "hike", "hiking", "trek", "trekking",
                   "bicycle", "bike", "biking","cycling", "exercise", "exercising", "ski", "skiing", "skate", "skating",
@@ -274,7 +251,7 @@ for name in glob.glob(r"/home/ubuntu/data/chunk*"):
                      "kayak", "kayaking", "squash", "tabletennis"]
 
 
-    sports_en = get_sports_tweets(df_en, sportslist_en)
+    sports_en = get_sports_tweets(df_en_l, sportslist_en)
 
 
     sportslist_et = ["jooksmine", "jooksma", "jooks", "kõndimine", "kõnd", "kõndima", "jalutama", "jalutus",
@@ -289,7 +266,7 @@ for name in glob.glob(r"/home/ubuntu/data/chunk*"):
                  "purjetamine", "squash", "seinatennis", "lauatennis"]
 
 
-    sports_et = get_sports_tweets(df_et, sportslist_et)
+    sports_et = get_sports_tweets(df_et_l, sportslist_et)
 
 
     #combine dataframes of sports tweets
