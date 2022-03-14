@@ -26,7 +26,7 @@ def create_pipeline(lang, package_name):
     #to avoid an error
     os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
     #make the pipeline for tokenizing and lemmatization
-    nlp_pipeline = stanza.Pipeline(lang, processors='tokenize, lemma', package=package_name)
+    nlp_pipeline = stanza.Pipeline(lang, processors='tokenize, lemma, pos', package=package_name)
     nlp = spacy_stanza.StanzaLanguage(nlp_pipeline)
     print("Stanza pipeline created for language: " + lang)
     return nlp
