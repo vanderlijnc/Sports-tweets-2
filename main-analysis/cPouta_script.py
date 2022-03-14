@@ -212,7 +212,7 @@ final_df = gpd.GeoDataFrame()
 #process each chunk of tweets with the following workflow
 batchno = 1
 
-for name in glob.glob(r"home/ubuntu/data/chunk*"):
+for name in glob.glob(r"/home/ubuntu/data/chunk*"):
 
     print("Processing batch " + str(batchno) + "/ 77")
     #add parameter nrows to test only a sample
