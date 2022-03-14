@@ -26,7 +26,7 @@ def create_pipeline(lang, package_name):
     #to avoid an error
     os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
     #make the pipeline for tokenizing and lemmatization
-    nlp_pipeline = stanza.Pipeline(lang, processors='tokenize, lemma, pos', package=package_name)
+    nlp_pipeline = stanza.Pipeline(lang, processors='tokenize, lemma', package=package_name)
     nlp = spacy_stanza.StanzaLanguage(nlp_pipeline)
     print("Stanza pipeline created for language: " + lang)
     return nlp
@@ -48,7 +48,7 @@ def create_lemmas(df, nlp_lang):
 
     df2["lemmas"] = None
     df2["lemma_text"] = None
-    df2['full_text'] = df2['full_text'].replace('#', '')
+    #df2['full_text'] = df2['full_text'].replace('#', '')
     for i in df2.index:
 
         tweet_text = df2.loc[i, "full_text"]
@@ -65,7 +65,7 @@ def create_lemmas(df, nlp_lang):
 
             #access the lemmas and add to the dataframe
             for token in doc:
-                #token.lemma_ = token.lemma_.replace("#", "")
+                token.lemma_ = token.lemma_.replace("#", "")
                 #token.lemma_ = token.lemma_.replace("oitta", "oittaa")
                 #token.lemma_ = token.lemma_.replace("palohe", "paloheinä")
                 lemmas.append(token.lemma_)
@@ -84,7 +84,6 @@ def create_lemmas(df, nlp_lang):
 
     print("--- Lemmatising %s tweets took %s minutes ---" % (tweet_count, total_time))
     return df2
-
 
 def get_sports_tweets(df, keyword_list):
     """
@@ -213,7 +212,7 @@ final_df = gpd.GeoDataFrame()
 #process each chunk of tweets with the following workflow
 batchno = 1
 
-for name in glob.glob(r"/home/ubuntu/data/chunk*"):
+for name in glob.glob(r"home/ubuntu/data/chunk*"):
 
     print("Processing batch " + str(batchno) + "/ 77")
     #add parameter nrows to test only a sample
