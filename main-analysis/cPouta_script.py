@@ -280,11 +280,13 @@ for name in glob.glob(r"/home/ubuntu/data/chunk*"):
     sportsjyv = geocode(sportstogeocode, jyvnames)
 
     #parse points from geotagged tweets, this was done separately to speed up the process
-    sportsgeotagged = parse_points(sportsgeotagged)
+    if len(sportsgeotagged) > 0:
+        sportsgeotagged2 = parse_points(sportsgeotagged)
 
-    #combine back to the geocoded tweets and save to csv
-    sportsjyv_combined = sportsjyv.append(sportsgeotagged)
-
+        #combine back to the geocoded tweets and save to csv
+        sportsjyv_combined = sportsjyv.append(sportsgeotagged2)
+    else:
+        sportsjyv_combined = sportsjyv
     #save the chunk to csv as a backup and to test post-processing in advance
     sportsjyv_combined.to_csv("sports_new" + str(batchno) + ".csv")
     final_df = final_df.append(sportsjyv_combined)
