@@ -164,7 +164,7 @@ def parse_points(sportsgeotagged_o):
 
 
     geom = []
-    for x, y in zip(sportsgeotagged['lon'], sportsgeotagged['lat']):
+    for x, y in zip(sportsgeotagged["lon"], sportsgeotagged["lat"]):
         try:
             geom.append(Point(x, y))
 
@@ -172,7 +172,7 @@ def parse_points(sportsgeotagged_o):
             geom.append(None)
             print("Value Error or Key Error while parsing points")
 
-    sportsgeotagged['geometry'] = geom
+    sportsgeotagged["geometry"] = geom
     gdf = gpd.GeoDataFrame(sportsgeotagged, geometry="geometry")
     gdf.crs = CRS.from_epsg(4326).to_wkt()
     gdf = gdf.to_crs(epsg=3067)
@@ -211,13 +211,13 @@ final_df = gpd.GeoDataFrame()
 
 #process each chunk of tweets with the following workflow
 batchno = 1
-
+#r"/home/ubuntu/data/chunk*"
 for name in glob.glob(r"/home/ubuntu/data/chunk*"):
 
     print("Processing batch " + str(batchno) + "/ 77")
     #add parameter nrows to test only a sample
 
-    df = pd.read_csv(name, engine='python', encoding='utf-8')
+    df = pd.read_csv(name, engine='python', encoding='utf-8', nrows=1000)
 
     #separate English, Finnish and Estonian dataframes
     df_fi = df[df["lang"]=="fi"]
@@ -281,17 +281,19 @@ for name in glob.glob(r"/home/ubuntu/data/chunk*"):
 
     #parse points from geotagged tweets, this was done separately to speed up the process
     if len(sportsgeotagged) > 0:
+
         sportsgeotagged2 = parse_points(sportsgeotagged)
 
-        #combine back to the geocoded tweets and save to csv
+    #combine back to the geocoded tweets and save to csv
         sportsjyv_combined = sportsjyv.append(sportsgeotagged2)
     else:
-        sportsjyv_combined = sportsjyv
-    #save the chunk to csv as a backup and to test post-processing in advance
-    sportsjyv_combined.to_csv("sports_new" + str(batchno) + ".csv")
-    final_df = final_df.append(sportsjyv_combined)
+        sportsjyv_combined = sportstogeocode
 
-    batchno += 1
+#save the chunk to csv as a backup and to test post-processing in advance
+#sportsjyv_combined.to_csv("sports_new" + str(batchno) + ".csv")
+final_df = final_df.append(sportsjyv_combined)
+
+batchno += 1
 
 #save to shapefile, delete list of lemmas defore that. Shapefile doesn't like lists.
 
