@@ -79,8 +79,8 @@ def create_lemmas(df, nlp_lang):
             print("Encountered Index Error")
 
         #print the time it took to lemmatise x amount of tweets
-        tweet_count = len(df2)
-        total_time = round((time.time() - start_time)/60, 3)
+    tweet_count = len(df2)
+    total_time = round((time.time() - start_time)/60, 3)
 
     print("--- Lemmatising %s tweets took %s minutes ---" % (tweet_count, total_time))
     return df2
