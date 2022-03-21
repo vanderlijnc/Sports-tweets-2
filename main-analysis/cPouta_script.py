@@ -217,7 +217,7 @@ for name in glob.glob(r"/home/ubuntu/data/chunk*"):
     print("Processing batch " + str(batchno) + "/ 77")
     #add parameter nrows to test only a sample
 
-    df = pd.read_csv(name, engine='python', encoding='utf-8', nrows=100)
+    df = pd.read_csv(name, engine='python', encoding='utf-8', nrows=500)
 
     #separate English, Finnish and Estonian dataframes
     df_fi = df[df["lang"]=="fi"]
@@ -276,8 +276,6 @@ for name in glob.glob(r"/home/ubuntu/data/chunk*"):
     sportstogeocode = sports[sports['geom'].isna()]
     sportsgeotagged = sports[~(sports['geom'].isna())]
 
-    #geocode the tweets without geolocation
-    sportsjyv = geocode(sportstogeocode, jyvnames)
 
     #parse points from geotagged tweets, this was done separately to speed up the process
     if len(sportsgeotagged) > 0:
