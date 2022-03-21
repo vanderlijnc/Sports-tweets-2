@@ -217,7 +217,7 @@ for name in glob.glob(r"/home/ubuntu/data/chunk*"):
     print("Processing batch " + str(batchno) + "/ 77")
     #add parameter nrows to test only a sample
 
-    df = pd.read_csv(name, engine='python', encoding='utf-8', nrows=500)
+    df = pd.read_csv(name, engine='python', encoding='utf-8')
 
     #separate English, Finnish and Estonian dataframes
     df_fi = df[df["lang"]=="fi"]
@@ -276,6 +276,11 @@ for name in glob.glob(r"/home/ubuntu/data/chunk*"):
     sportstogeocode = sports[sports['geom'].isna()]
     sportsgeotagged = sports[~(sports['geom'].isna())]
 
+    if len(sportstogeocode) > 0:
+        #geocode the tweets without geolocation
+        sportsjyv = geocode(sportstogeocode, jyvnames)
+    else:
+        sportsjyv = gpd.GeoDataFrame()
 
     #parse points from geotagged tweets, this was done separately to speed up the process
     if len(sportsgeotagged) > 0:
@@ -285,13 +290,15 @@ for name in glob.glob(r"/home/ubuntu/data/chunk*"):
     #combine back to the geocoded tweets and save to csv
         sportsjyv_combined = sportsjyv.append(sportsgeotagged2)
     else:
-        sportsjyv_combined = sportstogeocode
+        sportsjyv_combined = sportsjyv
+
+
 
 #save the chunk to csv as a backup and to test post-processing in advance
 #sportsjyv_combined.to_csv("sports_new" + str(batchno) + ".csv")
-final_df = final_df.append(sportsjyv_combined)
+    final_df = final_df.append(sportsjyv_combined)
 
-batchno += 1
+    batchno += 1
 
 #save to shapefile, delete list of lemmas defore that. Shapefile doesn't like lists.
 
