@@ -276,21 +276,16 @@ for name in glob.glob(r"/home/ubuntu/data/chunk*"):
     sportstogeocode = sports[sports['geom'].isna()]
     sportsgeotagged = sports[~(sports['geom'].isna())]
 
-    if len(sportstogeocode) > 0:
-        #geocode the tweets without geolocation
-        sportsjyv = geocode(sportstogeocode, jyvnames)
-    else:
-        sportsjyv = gpd.GeoDataFrame()
+
+
+    sportsjyv = geocode(sportstogeocode, jyvnames)
+
 
     #parse points from geotagged tweets, this was done separately to speed up the process
-    if len(sportsgeotagged) > 0:
 
-        sportsgeotagged2 = parse_points(sportsgeotagged)
+    sportsgeotagged2 = parse_points(sportsgeotagged)
 
-    #combine back to the geocoded tweets and save to csv
-        sportsjyv_combined = sportsjyv.append(sportsgeotagged2)
-    else:
-        sportsjyv_combined = sportsjyv
+    sportsjyv_combined = sportsjyv.append(sportsgeotagged2)
 
 
 
