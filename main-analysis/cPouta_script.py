@@ -273,25 +273,24 @@ for name in glob.glob(r"/home/ubuntu/data/chunk*"):
     sports = sports.append(sports_et)
 
     #here figure out which sports tweets already have geotags
-    sportstogeocode = sports[sports['geom'].isna()]
+    #sportstogeocode = sports[sports['geom'].isna()]
     sportsgeotagged = sports[~(sports['geom'].isna())]
 
-
-
-    sportsjyv = geocode(sportstogeocode, jyvnames)
+    #sportsjyv = geocode(sportstogeocode, jyvnames)
 
 
     #parse points from geotagged tweets, this was done separately to speed up the process
 
     sportsgeotagged2 = parse_points(sportsgeotagged)
+    #combine back to the geocoded tweets and save to csv
+    #sportshma_combined = sportshma.append(sportsgeotagged)
 
-    sportsjyv_combined = sportsjyv.append(sportsgeotagged2)
+    #save the chunk to csv as a backup and to test post-processing in advance
+    #sportsgeotagged.to_csv("sports_geotagged_" + str(batchno) + ".csv")
 
+    #sportsjyv_combined = sportsjyv.append(sportsgeotagged2)
 
-
-#save the chunk to csv as a backup and to test post-processing in advance
-#sportsjyv_combined.to_csv("sports_new" + str(batchno) + ".csv")
-    final_df = final_df.append(sportsjyv_combined)
+    final_df = final_df.append(sportsgeotagged2)
 
     batchno += 1
 
@@ -299,8 +298,9 @@ for name in glob.glob(r"/home/ubuntu/data/chunk*"):
 
 final_df = final_df.drop(["lemmas"], axis=1)
 final_df = final_df.drop(["geom"], axis=1)
+
 if len(final_df) > 0:
 
-    final_df.to_file("finaloutput_total.gpkg", driver='GPKG')
+    final_df.to_file("finaloutput_only_geotagged.gpkg", driver='GPKG')
 else:
     print("--- Final dataframe is empty ---")
