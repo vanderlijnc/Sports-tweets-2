@@ -27,9 +27,9 @@ import glob
     #limit| int, optional: limits the number of records retrieved
     #"""
 
-    # set up database connection
-    #con = psycopg2.connect(database='some_new', user='kosokoso', password='DigiGeoSonja!',
-                       #host='dgl-data.geography.helsinki.fi')
+    # set up database connection- substitute ' ' with own information.
+    #con = psycopg2.connect(database='some_new', user=' ', password=' ',
+                       #host=' ')
     
     #if no limit is specified, the function retrives all data (38,5 million rows, takes a while)
     #if limit == None:
@@ -314,12 +314,12 @@ def make_interactive_map(sportshma, filename):
 #Download stanza nlp models
 stanza.download("en")
 stanza.download("fi")
-stanza.download("et")
+stanza.download("sv")
 
 #create pipelines
 nlp_en = create_pipeline("en", "ewt")
 nlp_fi = create_pipeline("fi", "tdt")
-nlp_et = create_pipeline("et", "edt")
+nlp_et = create_pipeline("sv", "talbanken")
 
 #get info from gazetteer
 hmanames = gpd.read_file(r"hmagazetteer.shp")
@@ -334,56 +334,37 @@ for name in glob.glob(r"chunk*"):
     print("Processing batch " + str(batchno) + "/ 77")
     df = pd.read_csv(open(name), encoding='utf-8', engine='c')
 
-    #separate english and finnish dataframes
+    #separate English, Finnish and Swedish dataframes
     df_fi = df[df["lang"]=="fi"]
     df_en = df[df["lang"]=="en"]
-    df_et = df[df["lang"]=="et"]
+    df_sv = df[df["lang"]=="sv"]
 
 
     #create lemmas for English and Finnish tweets
     df_fi = create_lemmas(df_fi, nlp_fi)
     df_en = create_lemmas(df_en, nlp_en)
-    df_et = create_lemmas(df_et, nlp_et)
+    df_sv = create_lemmas(df_sv, nlp_sv)
 
 
     #retrieve sports related tweets based on keyword lists
-    sportslist_fi = ["kÃ¤vely", "kÃ¤vellÃ¤", "kÃ¤veleminen" "juoksu", "juosta", "juokseminen", "hiihto", "hiihtÃ¤Ã¤", "hiihtÃ¤minen",
-                 "lenkki", "lenkkeily", "lenkkeillÃ¤", "treenata", "treenaaminen", "urheilla", "meloa", "melonta", "soutaa", 
-                 "soutaminen", "patikointi", "patikoida", "patikoiminen",  
-                  "treeni", "urheilu", "liikunta", "pyÃ¶rÃ¤", "pyÃ¶rÃ¤ily", "pyÃ¶rÃ¤illÃ¤", "pyÃ¶rÃ¤ileminen", "jÃ¤Ã¤kiekko", "hockey",
-                  "jalkapallo", "tennis", "tanssi", "tanssia", "tanssiminen", "hiki", "hikoilla", "sulkapallo",
-                     "sÃ¤hly", "salibandy", "lentopallo",  "lentis", "luistella", "luisteleminen", "luistelu", "kuntosali",          "koris","futis", "koripallo", "uinti", "uida", "uiminen", "kajakki", "pujehtia", "purjehdus", "lÃ¤tkÃ¤", "jooga", "squash", "kÃ¶ssi", "pingis", "pÃ¶ytÃ¤tennis"]
+    sportslist_fi = ["juosta", "juoksu", "juokseminen", "lenkkeillä", "lenkki", "lenkkeily", "kävellä", "kävely", "käveleminen",      "patikoida", "patikointi", "patikoiminen", "pyöräillä", "pyörä", "pyöräily", "pyöräileminen"]
 
     sports_fi = get_sports_tweets(df_fi, sportslist_fi)
 
     sportslist_en = ["running", "run", "walk", "walking", "jog" ,"jogging", "hike", "hiking", "trek", "trekking", 
-                  "bicycle", "bike", "biking","cycling", "exercise", "exercising", "ski", "skiing", "skate", "skating", 
-                  "workout", "training", "sport", "sporting", "canoe", "canoeing", "ice-hockey", "basketball",
-                 "hockey", "football", "tennis", "dance", "dancing", "rowing", "sweat", "sweating", "badminton",
-                 "floorball", "volley", "volleyball",  "beach volley", "yoga","swimming", "swim", "sail", "sailing", "kayak", "kayaking", "squash", "tabletennis"]
+                  "bicycle", "bike", "biking","cycling"]
 
 
     sports_en = get_sports_tweets(df_en, sportslist_en) 
+    
+    
+    sportslist_sv = ["gående"."joggning","vandring","cykling"]
 
-
-    sportslist_et = ["jooksmine", "jooksma", "jooks", "kÃµndimine", "kÃµnd", "kÃµndima", "jalutama", "jalutus", 
-                 "jalutamine", "sÃ¶rkimine", "sÃ¶rkima", "sÃ¶rk", "sÃ¶rksjooks", "matk", "matkamine", "matkama",
-                   "jalgratas", "jalgrattasÃµit", "rattasÃµit", "treening", "treenima", "vÃµimlema", "vÃµimlemine", 
-                 "uisutamine", "uisutama", "suusatama", "suusatamine", "sportima", "sportimine", "trenn", "sport", 
-                 "jÃµusaal", "vÃµimla", "spordihall", "spordisaal", "korvpall", "koss", "kanuu",  "kanuutama", 
-                 "kanuutamine", "kanuusÃµit", "jÃ¤Ã¤hoki", "hoki", "jalgpall", "jalka", "tennis", "tants", 
-                 "tantsimine", "tantsima", "sÃµudmine", "sÃµudma", "aerutama", "aerutamine", "higi", "higistama", 
-                 "higistamine", "sulgpall", "bÃ¤dminton", "saalihoki", "volle", "rannavolle", "vÃµrkpall", 
-                 "rannavÃµrkpall", "joogatama", "jooga", "ujuma", "ujumine", "meresÃ¼st",  "kajakisÃµit", "purjetama", 
-                 "purjetamine", "squash", "seinatennis", "lauatennis"]
-
-
-    sports_et = get_sports_tweets(df_et, sportslist_et)
-
+    sports_sv = get_sports_tweets(df_sv, sportslist_sv)
 
     #combine lists of sports tweets
     sports = sports_en.append(sports_fi)
-    sports = sports.append(sports_et)
+    sports = sports.append(sports_sv)
 
     #here figure out which sports tweets already have geotags
     sportstogeocode = sports[sports['geom'].isna()]

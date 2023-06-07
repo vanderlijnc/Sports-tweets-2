@@ -86,20 +86,20 @@ def get_sports_tweets(df, keyword_list):
     print(str(len(sports_df)) + ' tweets found with sports related keywords')
     return sports_df
 
-def geocode(sportstogeocode, jyvnames):
+def geocode(sportstogeocode, hmanames):
     """
-    Geocodes the tweets in sportstogeocode dataframe based on the gazetteer saved in jyvnames dataframe.
+    Geocodes the tweets in sportstogeocode dataframe based on the gazetteer saved in hmanames dataframe.
 
     Parameters:
 
     sportstogeocode | String: name of Pandas dataframe with ungeotagged tweets
-    jyvnames | String: name of GeoPandas dataframe holding gazetteer information
+    hmanames | String: name of GeoPandas dataframe holding gazetteer information
     """
     # Create a list of the placenames for comparison purposes
-    placenames = [i.lower() for i in list(jyvnames['name'])]
+    placenames = [i.lower() for i in list(hmanames['name'])]
 
     # Create a new geodataframe which will hold the geocoded tweets
-    sportsjyv = gpd.GeoDataFrame()
+    sportshma = gpd.GeoDataFrame()
 
     for i, row in sportstogeocode.iterrows():
 
@@ -109,19 +109,19 @@ def geocode(sportstogeocode, jyvnames):
 
             # If there are any placenames, retrieve the point for that place and add it to the tweet information
             if len(placelist) > 0:
-                x = jyvnames.loc[jyvnames['name']== placelist[0], 'geometry'].values[0].x
-                y = jyvnames.loc[jyvnames['name']== placelist[0], 'geometry'].values[0].y
-                geom = jyvnames.loc[jyvnames['name']== placelist[0], 'geometry'].values[0]
+                x = hmanames.loc[hmanames['name']== placelist[0], 'geometry'].values[0].x
+                y = hmanames.loc[hmanames['name']== placelist[0], 'geometry'].values[0].y
+                geom = hmanames.loc[hmanames['name']== placelist[0], 'geometry'].values[0]
                 row['geometry'] = geom
                 row['lon'] = x
                 row['lat'] = y
-                sportsjyv = sportsjyv.append(row)
+                sportshma = sportshma.append(row)
 
         except TypeError:
             print('Encountered a TypeError')
 
-    print(str(len(sportsjyv)) + ' tweets succesfully geocoded')
-    return sportsjyv
+    print(str(len(sportshma)) + ' tweets succesfully geocoded')
+    return sportshma
 
 def parse_points(sportsgeotagged_o):
     """
@@ -155,13 +155,13 @@ def parse_points(sportsgeotagged_o):
 
     # get a shapefile of municipalities
     municip = gpd.GeoDataFrame.from_features(geojson.loads(r.content),  crs='EPSG:3067')
-    # only keep Jyväskylä area
-    jyv = municip.loc[municip['nimi'] == 'Jyväskylä']
-    jyv = jyv.to_crs(epsg=3067)
-    jyv.drop(['kunta', 'vuosi', 'nimi', 'name', 'namn', 'bbox'], axis=1, inplace=True)
-    jyvgeotagged = gpd.overlay(gdf, jyv, how='intersection')
+    # only keep HMA area
+    hma = municip.loc[municip['nimi'] == ['Vantaa', 'Espoo', 'Helsinki', 'Kauniainen']]
+    hma = hma.to_crs(epsg=3067)
+    hma.drop(['kunta', 'vuosi', 'nimi', 'name', 'namn', 'bbox'], axis=1, inplace=True)
+    hmageotagged = gpd.overlay(gdf, hma, how='intersection')
 
-    return jyvgeotagged
+    return hmageotagged
 
 
 if __name__ == '__main__':
@@ -169,12 +169,12 @@ if __name__ == '__main__':
     # Download language models
     stanza.download(lang='en')
     stanza.download(lang='fi')
-    stanza.download(lang='et')
+   
 
     # Create pipelines
     nlp_en = create_pipeline('en', 'ewt')
     nlp_fi = create_pipeline('fi', 'tdt')
-    nlp_et = create_pipeline('et', 'edt')
+
 
     # Create a geodataframe for final output
     final_df = gpd.GeoDataFrame()
@@ -186,72 +186,52 @@ if __name__ == '__main__':
     # Separate Finnish, English and Estonian to separate dataframes
     df_fi = df[df['lang']=='fi']
     df_en = df[df['lang']=='en']
-    df_et = df[df['lang']=='et']
+
 
     # Lemmatize tweet text, using correct language pipeline
     results_fi = create_lemmas_lambda(df_fi, nlp_fi)
     results_en = create_lemmas_lambda(df_en, nlp_en)
-    results_et = create_lemmas_lambda(df_et, nlp_et)
+
 
     # Retrieve sports related tweets based on keyword lists
-    sportslist_fi = ['kävely', 'kävellä', 'käveleminen' 'juoksu', 'juosta', 'juokseminen', 'hiihto', 'hiihtää', 'hiihtäminen',
-                 'lenkki', 'lenkkeily', 'lenkkeillä', 'treenata', 'treenaaminen', 'urheilla', 'meloa', 'melonta', 'soutaa',
-                 'soutaminen', 'patikointi', 'patikoida', 'patikoiminen',
-                  'treeni', 'urheilu', 'liikunta', 'pyörä', 'pyöräily', 'pyöräillä', 'pyöräileminen', 'jääkiekko', 'hockey',
-                  'jalkapallo', 'tennis', 'tanssi', 'tanssia', 'tanssiminen', 'hiki', 'hikoilla', 'sulkapallo',
-                     'sähly', 'salibandy', 'lentopallo',  'lentis', 'luistella', 'luisteleminen', 'luistelu', 'kuntosali',
-                     'koris','futis', 'koripallo', 'uinti', 'uida', 'uiminen', 'kajakki', 'pujehtia', 'purjehdus', 'lätkä', 'jooga',
-                     'squash', 'kössi', 'pingis', 'pöytätennis']
+    sportslist_fi = ['kävely', 'kävellä', 'käveleminen' 'juoksu', 'juosta', 'juokseminen', 
+                 'lenkki', 'lenkkeily', 'lenkkeillä', 'treenata', 'patikointi', 'patikoida', 'patikoiminen',
+                  'pyörä', 'pyöräily', 'pyöräillä', 'pyöräileminen']
 
     sports_fi = get_sports_tweets(results_fi, sportslist_fi)
 
     sportslist_en = ['running', 'run', 'walk', 'walking', 'jog' ,'jogging', 'hike', 'hiking', 'trek', 'trekking',
-                  'bicycle', 'bike', 'biking','cycling', 'exercise', 'exercising', 'ski', 'skiing', 'skate', 'skating',
-                  'workout', 'training', 'sport', 'sporting', 'canoe', 'canoeing', 'ice-hockey', 'basketball',
-                 'hockey', 'football', 'tennis', 'dance', 'dancing', 'rowing', 'sweat', 'sweating', 'badminton',
-                 'floorball', 'volley', 'volleyball',  'beach volley', 'yoga','swimming', 'swim', 'sail', 'sailing',
-                     'kayak', 'kayaking', 'squash', 'tabletennis']
+                  'bicycle', 'bike', 'biking','cycling']
 
 
     sports_en = get_sports_tweets(results_en, sportslist_en)
 
 
-    sportslist_et = ['jooksmine', 'jooksma', 'jooks', 'kõndimine', 'kõnd', 'kõndima', 'jalutama', 'jalutus',
-                 'jalutamine', 'sörkimine', 'sörkima', 'sörk', 'sörksjooks', 'matk', 'matkamine', 'matkama',
-                   'jalgratas', 'jalgrattasõit', 'rattasõit', 'treening', 'treenima', 'võimlema', 'võimlemine',
-                 'uisutamine', 'uisutama', 'suusatama', 'suusatamine', 'sportima', 'sportimine', 'trenn', 'sport',
-                 'jõusaal', 'võimla', 'spordihall', 'spordisaal', 'korvpall', 'koss', 'kanuu',  'kanuutama',
-                 'kanuutamine', 'kanuusõit', 'jäähoki', 'hoki', 'jalgpall', 'jalka', 'tennis', 'tants',
-                 'tantsimine', 'tantsima', 'sõudmine', 'sõudma', 'aerutama', 'aerutamine', 'higi', 'higistama',
-                 'higistamine', 'sulgpall', 'bädminton', 'saalihoki', 'volle', 'rannavolle', 'võrkpall',
-                 'rannavõrkpall', 'joogatama', 'jooga', 'ujuma', 'ujumine', 'meresüst',  'kajakisõit', 'purjetama',
-                 'purjetamine', 'squash', 'seinatennis', 'lauatennis']
 
 
-    sports_et = get_sports_tweets(results_et, sportslist_et)
 
     # Combine dataframes of sports tweets
     sports = sports_en.append(sports_fi)
-    sports = sports.append(sports_et)
+
 
     # Figure out which sports tweets already have geotags
     sportstogeocode = sports[sports['geom'].isna()]
     sportsgeotagged = sports[~(sports['geom'].isna())]
 
     # Read in gazetteer
-    jyvnames = gpd.read_file(r'jyv_gazetteer.gpkg')
+    hmanames = gpd.read_file(r'hma_gazetteer.gpkg')
     # Geocode the tweets without geolocation
-    sportsjyv = geocode(sportstogeocode, jyvnames)
+    sportshma = geocode(sportstogeocode, hmanames)
 
     # Parse points from geotagged tweets
-    sportsgeotagged_jyv = parse_points(sportsgeotagged)
+    sportsgeotagged_hma = parse_points(sportsgeotagged)
 
     # Combine back to the geocoded tweets
-    if len(sportsjyv) > 0:
-        sportsjyv_combined = sportsjyv.append(sportsgeotagged_jyv)
-        final_df = final_df.append(sportsjyv_combined)
+    if len(sportshma) > 0:
+        sportshma_combined = sportshma.append(sportsgeotagged_hma)
+        final_df = final_df.append(sportshma_combined)
     else:
-        final_df = final_df.append(sportsgeotagged_jyv)
+        final_df = final_df.append(sportsgeotagged_hma)
 
     # Drop columns of lists
     final_df = final_df.drop(['lemmas'], axis=1)
