@@ -2,7 +2,7 @@
 
 # Sports-tweets-analysis
 
-Analysis code for JOSIS paper entitled: Combining geotagged Twitter data with geoparsing to identify the locations of sports activity. 
+Analysis code for IJGIS paper entitled: Combining geotagged Twitter data with geoparsing to identify the locations of sports activity. 
 
 ## Topic
 
